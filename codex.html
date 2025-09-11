@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mini VSCode Browser</title>
+
+<!-- CodeMirror 5 -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/dracula.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/xml/xml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/css/css.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/htmlmixed/htmlmixed.min.js"></script>
+
+<!-- Addons -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/edit/closebrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/edit/closetag.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/hint/show-hint.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/hint/show-hint.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/hint/html-hint.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/hint/javascript-hint.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/hint/css-hint.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/hint/anyword-hint.min.js"></script>
+
+<style>
+html, body { margin:0; height:100%; overflow:hidden; }
+body { font-family: "Fira Code", monospace; background:#14191f; color:#e4f1f9; display:flex; flex-direction:column; }
+.container { flex:1; display:flex; flex-direction:column; }
+.preview { flex:1; border-bottom:2px solid #00c7b1; overflow:auto; background:#1f9aff10; }
+iframe { width:100%; height:100%; border:none; background:white; }
+.editor { overflow:hidden; flex:1; }
+.CodeMirror { height:100% !important; width:100% !important; }
+#settingsBtn { position:fixed; bottom:15px; right:15px; background:#00c7b1; border:none; border-radius:50%; width:40px; height:40px; font-size:18px; cursor:pointer; opacity:0; display:flex; align-items:center; justify-content:center; z-index:1000; transition:0.3s;}
+#settingsBtn:hover {opacity:1;}
+#settingsModal { position:fixed; bottom:60px; right:15px; background:#222; color:white; padding:15px; border-radius:8px; display:none; flex-direction:column; gap:10px; min-width:260px; box-shadow:0 4px 20px rgba(0,0,0,0.5); font-size:14px; z-index:1001; }
+#settingsModal label { display:flex; justify-content:space-between; align-items:center; }
+#settingsModal input, #settingsModal select { margin-left:10px; flex:1; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="preview" id="previewContainer"><iframe id="previewFrame"></iframe></div>
+  <div class="editor" id="editorContainer"></div>
+</div>
+
+<button id="settingsBtn">⚙️</button>
+<div id="settingsModal">
+  <label>Font Size: <input type="number" id="fontSize" value="16" min="10" max="30">px</label>
+  <label>Font Family: 
+    <select id="fontFamily">
+      <option value="Fira Code">Fira Code</option>
+      <option value="JetBrains Mono">JetBrains Mono</option>
+      <option value="Courier New">Courier New</option>
+      <option value="monospace">Monospace</option>
+    </select>
+  </label>
+  <label>Preview height %: <input type="range" id="splitRangeV" min="20" max="80" value="50"></label>
+  <label>Preview width %: <input type="range" id="splitRangeH" min="30" max="100" value="100"></label>
+</div>
+
+<script>
+const initialCode = `<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      .btn { 
+        padding: 15px 30px; 
+        font-size: 20px; 
+        border: none; 
+        border-radius: 8px; 
+        cursor: pointer; 
+        background: #1f9aff; 
+        color: white; 
+        transition: 0.3s;
+      }
+      .btn:hover { 
+        background: #00c7b1; 
+        transform: scale(1.1);
+      }
+    </style>
+  </head>
+  <body>
+    <div>
+    </div>
+    <button class="btn">Hover Me</button>
+  </body>
+</html>`;
+
+// Editor
+const editor = CodeMirror(document.getElementById("editorContainer"), {
+  value: initialCode,
+  mode: "htmlmixed",
+  theme: "dracula",
+  lineNumbers: true,
+  autoCloseBrackets: true,
+  autoCloseTags: true,
+  extraKeys: {"Ctrl-Space": "autocomplete", "Tab": function(cm){
+    // Snippet per "class" o "id"
+    const cursor = cm.getCursor();
+    const token = cm.getTokenAt(cursor);
+    const start = token.start;
+    const end = cursor.ch;
+    const word = token.string.slice(0, end-start);
+
+    if(["cla","c","cl","class","clas"].find((element) => element === word)){cm.replaceRange('class=""', {line:cursor.line,ch:start},{line:cursor.line,ch:end}); cm.setCursor({line:cursor.line,ch:start+7});}
+    else if(["i","id"].find((element) => element === word)){cm.replaceRange('id=""', {line:cursor.line,ch:start},{line:cursor.line,ch:end}); cm.setCursor({line:cursor.line,ch:start+4});}
+    else cm.execCommand("insertTab");
+  }}
+});
+
+// Preview live
+const previewFrame = document.getElementById("previewFrame");
+function updatePreview() { previewFrame.srcdoc = editor.getValue(); }
+editor.on("change", updatePreview);
+window.addEventListener("load", updatePreview);
+
+// Bottone impostazioni
+const settingsBtn = document.getElementById("settingsBtn");
+const settingsModal = document.getElementById("settingsModal");
+settingsBtn.addEventListener("click", ()=>{settingsModal.style.display=settingsModal.style.display==="flex"?"none":"flex";});
+
+// Impostazioni
+const fontSizeInput=document.getElementById("fontSize");
+const fontFamilySelect=document.getElementById("fontFamily");
+const splitRangeV=document.getElementById("splitRangeV");
+const splitRangeH=document.getElementById("splitRangeH");
+const previewContainer=document.getElementById("previewContainer");
+const editorContainer=document.getElementById("editorContainer");
+
+function updateSizes(){
+  previewContainer.style.flex=splitRangeV.value;
+  editorContainer.style.flex=100-splitRangeV.value;
+  if(splitRangeH.value<100){document.querySelector(".container").style.flexDirection="row";
+    previewContainer.style.width=splitRangeH.value+"%";
+    editorContainer.style.width=(100-splitRangeH.value)+"%";
+  } else {document.querySelector(".container").style.flexDirection="column";
+    previewContainer.style.width="100%"; editorContainer.style.width="100%";}
+  editor.setSize("100%", editorContainer.offsetHeight+"px");
+}
+
+splitRangeV.addEventListener("input", updateSizes);
+splitRangeH.addEventListener("input", updateSizes);
+window.addEventListener("resize", updateSizes);
+updateSizes();
+
+// Font
+fontSizeInput.addEventListener("input", e=>editor.getWrapperElement().style.fontSize=e.target.value+"px");
+fontFamilySelect.addEventListener("change", e=>editor.getWrapperElement().style.fontFamily=e.target.value);
+
+// Auto-complete su input
+editor.on("inputRead", function(cm, change){
+  if(change.text[0].match(/[\w\.]/)){ cm.showHint({hint: CodeMirror.hint.anyword}); }
+});
+</script>
+</body>
+</html>
