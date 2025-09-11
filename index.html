@@ -27,7 +27,7 @@
 <style>
 html, body { margin:0; height:100%; overflow:hidden; }
 body { font-family: "Fira Code", monospace; background:#14191f; color:#e4f1f9; display:flex; flex-direction:column; }
-.container { flex:1; display:flex; flex-direction:column; }
+.container { flex:1; display:flex; flex-direction:column; margin: auto; width: 100%; }
 .preview { flex:1; border-bottom:2px solid #00c7b1; overflow:auto; background:#1f9aff10; }
 iframe { width:100%; height:100%; border:none; background:white; }
 .editor { overflow:hidden; flex:1; }
@@ -40,13 +40,26 @@ iframe { width:100%; height:100%; border:none; background:white; }
 </style>
 </head>
 <body>
-<div class="container">
+<div class="container" id="container">
   <div class="preview" id="previewContainer"><iframe id="previewFrame"></iframe></div>
   <div class="editor" id="editorContainer"></div>
 </div>
 
 <button id="settingsBtn">⚙️</button>
 <div id="settingsModal">
+  <label>Preset: 
+    <select id="preset">
+      <option value="classicMobile">mobile</option>
+      <option value="mobileDesktop">16:9 vertical</option>
+      <option value="mobileDesktopPlus">18:9 vertical</option>
+      <option value="mobileWideDesktop">21:9 vertical</option>
+      <option value="Hmobile">16:10 vertical</option>
+
+      <option value="classicDesktop">desktop</option>
+      <option value="desktop">16:9 horizzontal</option>
+      <option value="wideDesktop">21:9 horizzontal</option>
+    </select>
+  </label>
   <label>Font Size: <input type="number" id="fontSize" value="16" min="10" max="30">px</label>
   <label>Font Family: 
     <select id="fontFamily">
@@ -56,8 +69,12 @@ iframe { width:100%; height:100%; border:none; background:white; }
       <option value="monospace">Monospace</option>
     </select>
   </label>
-  <label>Preview height %: <input type="range" id="splitRangeV" min="20" max="80" value="50"></label>
-  <label>Preview width %: <input type="range" id="splitRangeH" min="30" max="100" value="100"></label>
+  <label>Editor position: <input type="range" id="splitRangeH" min="-100" max="100" value="100"></label>
+  <label>Editor %: <input type="range" id="splitRangeV" min="-100" max="100" value="50"></label>
+
+  <label>Body width: <input type="number" id="bodyW" value="1920">px</label>
+  <label>Body height: <input type="number" id="bodyH" value="1080">px</label>
+  <button id="fitScreen">Fit to Screen</button>
 </div>
 
 <script>
@@ -122,26 +139,84 @@ const settingsModal = document.getElementById("settingsModal");
 settingsBtn.addEventListener("click", ()=>{settingsModal.style.display=settingsModal.style.display==="flex"?"none":"flex";});
 
 // Impostazioni
+const preset=document.getElementById("preset");
+
 const fontSizeInput=document.getElementById("fontSize");
 const fontFamilySelect=document.getElementById("fontFamily");
 const splitRangeV=document.getElementById("splitRangeV");
 const splitRangeH=document.getElementById("splitRangeH");
+
+var bodyW=document.getElementById("bodyW");
+var bodyH=document.getElementById("bodyH");
 const previewContainer=document.getElementById("previewContainer");
 const editorContainer=document.getElementById("editorContainer");
+const container=document.getElementById("container");
+
+const fitScreen=document.getElementById("fitScreen");
 
 function updateSizes(){
   previewContainer.style.flex=splitRangeV.value;
   editorContainer.style.flex=100-splitRangeV.value;
-  if(splitRangeH.value<100){document.querySelector(".container").style.flexDirection="row";
-    previewContainer.style.width=splitRangeH.value+"%";
-    editorContainer.style.width=(100-splitRangeH.value)+"%";
-  } else {document.querySelector(".container").style.flexDirection="column";
-    previewContainer.style.width="100%"; editorContainer.style.width="100%";}
+
+  if( splitRangeH.value < 0 && splitRangeH.value != -100){document.querySelector(".container").style.flexDirection="row-reverse";
+    previewContainer.style.width="50%"; editorContainer.style.width="50%";
+  }
+  if( splitRangeH.value > 0 && splitRangeH.value != 100){document.querySelector(".container").style.flexDirection="row";
+    previewContainer.style.width="50%"; editorContainer.style.width="50%";
+  }
+
+  if( splitRangeH.value <= -100 ){document.querySelector(".container").style.flexDirection="column-reverse";
+    previewContainer.style.width="100%"; editorContainer.style.width="100%";
+  }
+  if( splitRangeH.value >= 100) {document.querySelector(".container").style.flexDirection="column";
+    previewContainer.style.width="100%"; editorContainer.style.width="100%";
+  }
   editor.setSize("100%", editorContainer.offsetHeight+"px");
 }
+function updateBody(){
+  container.style.width=bodyW.value+'px';
+  container.style.height=bodyH.value+'px';
+}
+
+preset.addEventListener("change", (e) => {
+  console.log(e.target.value);
+  container.style.height = window.innerHeight+'px';;
+  if(e.target.value === 'classicMobile'){
+    container.style.width = (window.innerHeight / 18 ) * 9 +'px';
+  } else if(e.target.value === 'mobileDesktop'){
+    container.style.width = (window.innerHeight / 16 ) * 9 +'px';
+  } else if(e.target.value === 'mobileDesktopPlus'){
+    container.style.width = (window.innerHeight / 18 ) * 9 +'px';
+  } else if(e.target.value === 'mobileWideDesktop'){
+    container.style.width = (window.innerHeight / 21 ) * 9 +'px';
+  } else if(e.target.value === 'Hmobile'){
+    container.style.width = (window.innerHeight / 19 ) * 9 +'px';
+
+  } else if(e.target.value === 'classicDesktop'){
+    container.style.width = (window.innerHeight / 3 ) * 4 +'px';
+  } else if(e.target.value === 'desktop'){
+    container.style.width = (window.innerHeight / 9 ) * 16 +'px';
+  } else if(e.target.value === 'wideDesktop'){
+    container.style.width = (window.innerHeight / 9 ) * 21 +'px';
+  }else{
+
+  }
+  bodyW.value=parseInt(container.style.width);
+  bodyH.value=parseInt(container.style.height);
+});
 
 splitRangeV.addEventListener("input", updateSizes);
 splitRangeH.addEventListener("input", updateSizes);
+
+bodyW.addEventListener("input", updateBody);
+bodyH.addEventListener("input", updateBody);
+
+fitScreen.addEventListener("click", () => {
+  bodyW.value=window.innerWidth;
+  bodyH.value=window.innerHeight;
+  updateBody();
+});
+
 window.addEventListener("resize", updateSizes);
 updateSizes();
 
