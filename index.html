@@ -198,11 +198,16 @@ preset.addEventListener("change", (e) => {
   } else if(e.target.value === 'wideDesktop'){
     container.style.width = (window.innerHeight / 9 ) * 21 +'px';
   }else{
-
   }
   bodyW.value=parseInt(container.style.width);
   bodyH.value=parseInt(container.style.height);
 });
+
+function fitScreenBody(){
+  bodyW.value=window.innerWidth;
+  bodyH.value=window.innerHeight;
+  updateBody();
+}
 
 splitRangeV.addEventListener("input", updateSizes);
 splitRangeH.addEventListener("input", updateSizes);
@@ -210,11 +215,7 @@ splitRangeH.addEventListener("input", updateSizes);
 bodyW.addEventListener("input", updateBody);
 bodyH.addEventListener("input", updateBody);
 
-fitScreen.addEventListener("click", () => {
-  bodyW.value=window.innerWidth;
-  bodyH.value=window.innerHeight;
-  updateBody();
-});
+fitScreen.addEventListener("click", fitScreenBody);
 
 window.addEventListener("resize", updateSizes);
 updateSizes();
@@ -230,4 +231,5 @@ editor.on("inputRead", function(cm, change){
 </script>
 </body>
 </html>
+
 
