@@ -228,8 +228,10 @@ fontFamilySelect.addEventListener("change", e=>editor.getWrapperElement().style.
 editor.on("inputRead", function(cm, change){
   if(change.text[0].match(/[\w\.]/)){ cm.showHint({hint: CodeMirror.hint.anyword}); }
 });
+  fitScreenBody();
 </script>
 </body>
 </html>
+
 
 
