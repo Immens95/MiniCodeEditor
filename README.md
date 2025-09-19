@@ -30,17 +30,20 @@ Perfetto per demo, tutorial e registrazioni OBS (shorts, reel, TikTok).
 
 ## ⚙️ Funzionalità principali
 
-- **Editor**
+**Editor**
+
  - Evidenziazione sintassi
  - Autocompletamento HTML, CSS e JavaScript
  - Autochiusura tag e parentesi
  - Supporto snippet (es. cla → class="")
 
-- **Anteprima Live**
+**Anteprima Live**
+
  - Aggiornamento in tempo reale mentre scrivi
  - Layout sempre proporzionato grazie a % di height/width
 
-- **Pannello Impostazioni (⚙️)**
+**Pannello Impostazioni (⚙️)**
+
  - Colori testo e background
  - Font e dimensione font
  - Proporzioni editor/preview (height % e width %)
