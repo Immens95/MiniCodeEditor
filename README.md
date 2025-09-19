@@ -49,15 +49,7 @@ Perfetto per demo, tutorial e registrazioni OBS (shorts, reel, TikTok).
  - Proporzioni editor/preview (height % e width %)
  - Ridimensionamento verticale/orizzontale finestra
 
-## 🎥 Utilizzo con OBS
-
-Apri index.html in Chrome/Edge/Firefox.
-In OBS aggiungi Window Capture e seleziona la finestra.
-Imposta la scena a 1080x1920 (verticale, formato short).
-Registra → avrai metà schermo con anteprima e metà con codice.
-Aggiungi musica e voiceover in OBS o in post-produzione.
-
-🛠️ Tecnologie usate
+## 🛠️ Tecnologie usate
 
 - HTML5
 - CSS3
